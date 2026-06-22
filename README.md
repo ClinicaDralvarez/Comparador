@@ -1,1 +1,1 @@
-# Comparador-de-resultados-de-tratamientos-esteticos
+# Comparador
