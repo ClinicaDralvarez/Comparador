@@ -147,7 +147,6 @@ h1 em {
   background: var(--w);
   border: 1.5px dashed var(--ln);
   border-radius: 14px;
-  cursor: pointer;
   transition: border-color .25s, box-shadow .25s, transform .2s;
   aspect-ratio: 4/3;
   display: flex;
@@ -164,13 +163,24 @@ h1 em {
 
 .ubox input[type="file"] {
   position: absolute;
-  inset: 0;
+  width: 1px;
+  height: 1px;
   opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.ubox-label {
+  position: absolute;
+  inset: 0;
   cursor: pointer;
-  width: 100%;
-  height: 100%;
   z-index: 2;
-  font-size: 16px; /* prevents iOS zoom */
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ubox.has .ubox-label {
+  bottom: 36px;
 }
 
 .ubox img.prev {
@@ -180,6 +190,7 @@ h1 em {
   height: 100%;
   object-fit: cover;
   border-radius: 12px;
+  pointer-events: none;
 }
 
 .ulabel {
@@ -254,9 +265,10 @@ h1 em {
   opacity: 0;
   transition: opacity .2s;
   backdrop-filter: blur(6px);
+  display: inline-block;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Show replace on desktop hover, always show on mobile when has image */
 @media (hover: hover) {
   .ubox.has:hover .rbtn { opacity: 1; }
 }
@@ -284,7 +296,7 @@ h1 em {
 
 .finput {
   font-family: 'DM Sans', sans-serif;
-  font-size: 16px; /* prevents iOS zoom */
+  font-size: 16px;
   background: var(--w);
   border: 1px solid var(--ln);
   border-radius: 9px;
@@ -387,7 +399,6 @@ h1 em {
   font-weight: 500;
 }
 
-/* WhatsApp button */
 .wa-btn {
   display: flex;
   align-items: center;
@@ -414,7 +425,6 @@ h1 em {
 
 .wa-icon { width: 26px; height: 26px; fill: #fff; flex-shrink: 0; }
 
-/* Copy link row */
 .link-row {
   display: flex;
   gap: 8px;
@@ -457,7 +467,6 @@ h1 em {
 
 .copy-btn.copied { background: var(--green); }
 
-/* Preview thumbnail */
 .preview-container {
   border-radius: 12px;
   overflow: hidden;
@@ -523,7 +532,6 @@ h1 em {
 .pv-lb { left: 12px; background: rgba(255,255,255,.85); color: var(--bm); border: 1px solid rgba(2,120,251,.2); }
 .pv-la { right: 12px; background: rgba(2,120,251,.85); color: #fff; }
 
-/* tip */
 .tip {
   background: var(--bp);
   border: 1px solid var(--bl);
@@ -536,7 +544,6 @@ h1 em {
 
 .tip strong { font-weight: 500; }
 
-/* Reset */
 .reset-btn {
   font-family: 'DM Sans', sans-serif;
   font-size: 11px;
@@ -557,7 +564,6 @@ h1 em {
 
 .reset-btn:active { background: var(--bm); color: #fff; border-color: var(--bm); }
 
-/* error */
 .err-box {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -622,28 +628,35 @@ footer {
 
   <!-- UPLOADS -->
   <div class="uploads">
+
+    <!-- CAJA ANTES -->
     <div class="ubox" id="boxB">
       <span class="cbadge cb-b">Antes</span>
       <input type="file" accept="image/*" id="fileB">
+      <label class="ubox-label" for="fileB" aria-label="Subir foto antes"></label>
       <div class="ulabel">
         <div class="uicon">
           <svg viewBox="0 0 24 24"><path d="M12 16V8m0 0l-3 3m3-3l3 3"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
         </div>
         <span class="utag tb">Foto Antes</span>
       </div>
-      <button class="rbtn" id="rBtnB">Cambiar</button>
+      <label class="rbtn" for="fileB">Cambiar</label>
     </div>
+
+    <!-- CAJA DESPUÉS -->
     <div class="ubox" id="boxA">
       <span class="cbadge cb-a">Después</span>
       <input type="file" accept="image/*" id="fileA">
+      <label class="ubox-label" for="fileA" aria-label="Subir foto después"></label>
       <div class="ulabel">
         <div class="uicon">
           <svg viewBox="0 0 24 24"><path d="M12 16V8m0 0l-3 3m3-3l3 3"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
         </div>
         <span class="utag ta">Foto Después</span>
       </div>
-      <button class="rbtn" id="rBtnA">Cambiar</button>
+      <label class="rbtn" for="fileA">Cambiar</label>
     </div>
+
   </div>
 
   <!-- FIELDS -->
@@ -678,7 +691,6 @@ footer {
 
     <span class="result-title">✅ Comparador listo</span>
 
-    <!-- Mini preview slider -->
     <div class="preview-container" id="pvContainer">
       <img class="pv-after"  id="pvAfter"  src="" alt="Después">
       <div class="pv-before-wrap" id="pvBeforeWrap">
@@ -693,7 +705,6 @@ footer {
       <span class="pv-lbl pv-la">Después</span>
     </div>
 
-    <!-- WhatsApp share -->
     <a class="wa-btn" id="waBtn" href="#" target="_blank" rel="noopener">
       <svg class="wa-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
@@ -701,7 +712,6 @@ footer {
       Enviar por WhatsApp
     </a>
 
-    <!-- Link manual -->
     <div class="link-row">
       <input class="link-input" id="linkInput" type="text" readonly placeholder="Link del comparador">
       <button class="copy-btn" id="copyBtn">Copiar</button>
@@ -719,34 +729,17 @@ footer {
 <footer>© Clínica Alvarez · Herramienta de uso interno</footer>
 
 <script>
-// ── CONFIG ──
 const IMGBB_KEY = '6cacc679ce23d93d6789e1bf3c4c60f2';
-
-// ── STATE ──
 let srcB = null, srcA = null, urlB = null, urlA = null;
 
-// ── SETUP UPLOADS ──
-function setupUpload(inputId, boxId, rBtnId, onLoad) {
+function setupUpload(inputId, boxId, onLoad) {
   const input = document.getElementById(inputId);
   const box   = document.getElementById(boxId);
-  const rbtn  = document.getElementById(rBtnId);
-
-  box.addEventListener('click', e => {
-    if (e.target === rbtn) return;
-    input.click();
-  });
-
-  rbtn.addEventListener('click', e => {
-    e.stopPropagation();
-    input.click();
-  });
-
-  input.addEventListener('change', () => {
-    const file = input.files[0];
+  input.addEventListener('change', function() {
+    const file = this.files[0];
     if (!file) return;
     const r = new FileReader();
-    r.onload = ev => {
-      // remove existing preview
+    r.onload = function(ev) {
       box.querySelectorAll('img.prev').forEach(el => el.remove());
       const img = document.createElement('img');
       img.className = 'prev';
@@ -759,8 +752,8 @@ function setupUpload(inputId, boxId, rBtnId, onLoad) {
   });
 }
 
-setupUpload('fileB', 'boxB', 'rBtnB', src => { srcB = src; checkReady(); });
-setupUpload('fileA', 'boxA', 'rBtnA', src => { srcA = src; checkReady(); });
+setupUpload('fileB', 'boxB', src => { srcB = src; checkReady(); });
+setupUpload('fileA', 'boxA', src => { srcA = src; checkReady(); });
 
 function checkReady() {
   const btn = document.getElementById('genBtn');
@@ -768,7 +761,6 @@ function checkReady() {
   else btn.classList.remove('ready');
 }
 
-// ── COMPRESS ──
 function compress(dataUrl, maxW, q) {
   return new Promise(resolve => {
     const img = new Image();
@@ -785,75 +777,52 @@ function compress(dataUrl, maxW, q) {
   });
 }
 
-// ── UPLOAD TO IMGBB ──
 async function uploadToImgBB(dataUrl) {
   const base64 = dataUrl.split(',')[1];
   const form = new FormData();
   form.append('image', base64);
-  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
-    method: 'POST',
-    body: form
-  });
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body: form });
   const data = await res.json();
   if (!data.success) throw new Error('Error subiendo imagen');
   return data.data.url;
 }
 
-// ── GENERATE ──
 document.getElementById('genBtn').addEventListener('click', generate);
 
 async function generate() {
   if (!srcB || !srcA) return;
   hideError();
-
   const progWrap = document.getElementById('progWrap');
   const progBar  = document.getElementById('progBar');
   const statusTxt = document.getElementById('statusTxt');
   const resultArea = document.getElementById('resultArea');
-
   progWrap.classList.add('vis');
   statusTxt.classList.add('vis');
   resultArea.classList.remove('vis');
   document.getElementById('genBtn').classList.remove('ready');
-
   try {
-    // Step 1 - compress
     setStatus('Comprimiendo imágenes...', 15, progBar, statusTxt);
     const cB = await compress(srcB, 1400, 0.82);
     const cA = await compress(srcA, 1400, 0.82);
-
-    // Step 2 - upload before
     setStatus('Subiendo foto Antes...', 35, progBar, statusTxt);
     urlB = await uploadToImgBB(cB);
-
-    // Step 3 - upload after
     setStatus('Subiendo foto Después...', 65, progBar, statusTxt);
     urlA = await uploadToImgBB(cA);
-
-    // Step 4 - build link
     setStatus('Construyendo comparador...', 88, progBar, statusTxt);
-
     const name  = document.getElementById('fName').value.trim();
     const treat = document.getElementById('fTreat').value.trim();
     const params = new URLSearchParams({ b: urlB, a: urlA });
     if (name)  params.set('n', name);
     if (treat) params.set('t', treat);
-
     const comparatorUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'ver.html?' + params.toString();
-
-    // WhatsApp message
     const waText = name
       ? `Hola ${name}, aquí puede ver su resultado de tratamiento${treat ? ' (' + treat + ')' : ''}:\n${comparatorUrl}`
       : `Aquí puede ver su resultado de tratamiento${treat ? ' (' + treat + ')' : ''}:\n${comparatorUrl}`;
-
     document.getElementById('waBtn').href = 'https://wa.me/?text=' + encodeURIComponent(waText);
     document.getElementById('linkInput').value = comparatorUrl;
-
-    // Mini preview
     document.getElementById('pvAfter').src  = urlA;
     document.getElementById('pvBefore').src = urlB;
     document.getElementById('pvAfter').onload = fixPreview;
-
     progBar.style.width = '100%';
     setTimeout(() => {
       progWrap.classList.remove('vis');
@@ -862,7 +831,6 @@ async function generate() {
       resultArea.classList.add('vis');
       document.getElementById('genBtn').classList.add('ready');
     }, 400);
-
   } catch(err) {
     progWrap.classList.remove('vis');
     statusTxt.classList.remove('vis');
@@ -873,22 +841,10 @@ async function generate() {
   }
 }
 
-function setStatus(txt, pct, bar, status) {
-  bar.style.width = pct + '%';
-  status.textContent = txt;
-}
+function setStatus(txt, pct, bar, status) { bar.style.width = pct + '%'; status.textContent = txt; }
+function showError(msg) { document.getElementById('errMsg').textContent = msg; document.getElementById('errBox').classList.add('vis'); }
+function hideError() { document.getElementById('errBox').classList.remove('vis'); }
 
-function showError(msg) {
-  const box = document.getElementById('errBox');
-  document.getElementById('errMsg').textContent = msg;
-  box.classList.add('vis');
-}
-
-function hideError() {
-  document.getElementById('errBox').classList.remove('vis');
-}
-
-// ── MINI SLIDER PREVIEW ──
 let dragging = false;
 const pvc = document.getElementById('pvContainer');
 
@@ -918,7 +874,6 @@ window.addEventListener('touchmove', e => { if (dragging) { setPvPos(getPvPct(e.
 window.addEventListener('touchend',  () => { dragging = false; });
 window.addEventListener('resize', fixPreview);
 
-// ── COPY LINK ──
 document.getElementById('copyBtn').addEventListener('click', () => {
   const btn = document.getElementById('copyBtn');
   navigator.clipboard.writeText(document.getElementById('linkInput').value).then(() => {
@@ -928,7 +883,6 @@ document.getElementById('copyBtn').addEventListener('click', () => {
   });
 });
 
-// ── RESET ──
 document.getElementById('resetBtn').addEventListener('click', () => {
   srcB = srcA = urlB = urlA = null;
   ['boxB','boxA'].forEach(id => {
