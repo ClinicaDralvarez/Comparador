@@ -41,14 +41,47 @@
 
   .step-bar { display:flex; align-items:center; margin:0 0 28px; padding:0 24px; }
   .step-item { display:flex; align-items:center; gap:8px; font-size:10px;
-    letter-spacing:0.14em; text-transform:uppercase; font-weight:500; color:var(--grey-mid); }
+    letter-spacing:0.14em; text-transform:uppercase; font-weight:500; color:var(--grey-mid);
+    cursor:default; transition:color .2s; }
   .step-item.active { color:var(--blue-deep); }
-  .step-item.done   { color:var(--blue-light); }
+  .step-item.done   { color:var(--blue-light); cursor:pointer; }
+  .step-item.done:hover { color:var(--blue-mid); }
   .step-num { width:24px; height:24px; border-radius:50%; border:1.5px solid currentColor;
     display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:500; }
   .step-item.active .step-num { background:var(--blue-deep); color:#fff; border-color:var(--blue-deep); }
   .step-item.done   .step-num { background:var(--blue-pale); border-color:var(--blue-light); }
   .step-sep { width:32px; height:1px; background:var(--line); margin:0 8px; }
+
+  /* CAMPOS PACIENTE */
+  .patient-fields { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .field-wrap { display:flex; flex-direction:column; gap:6px; }
+  .field-wrap label { font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
+    font-weight:600; color:var(--blue-mid); }
+  .field-wrap input { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:300;
+    color:var(--grey-dark); background:var(--white); border:1.5px solid var(--line);
+    border-radius:8px; padding:10px 14px; outline:none; transition:border-color .2s,box-shadow .2s; }
+  .field-wrap input:focus { border-color:var(--blue-mid); box-shadow:0 0 0 3px rgba(65,140,223,.12); }
+  .field-wrap input::placeholder { color:#b0c4de; }
+
+  /* BADGE PACIENTE EN SLIDER */
+  .patient-badge { text-align:center; }
+  .patient-badge h3 { font-family:'Cormorant Garamond',serif; font-weight:400;
+    font-size:clamp(1.1rem,2.5vw,1.5rem); color:var(--grey-dark); }
+  .patient-badge span { font-size:11px; color:var(--grey-mid); letter-spacing:0.1em; text-transform:uppercase; }
+
+  /* BOTÓN WHATSAPP */
+  .btn-whatsapp { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
+    letter-spacing:0.12em; text-transform:uppercase;
+    background:linear-gradient(135deg,#25d366,#128c7e);
+    color:#fff; border:none; padding:14px 32px; border-radius:100px; cursor:pointer;
+    box-shadow:0 6px 24px rgba(37,211,102,.30); transition:transform .15s,box-shadow .15s;
+    display:none; align-items:center; gap:10px; }
+  .btn-whatsapp:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(37,211,102,.4); }
+  .btn-whatsapp.visible { display:inline-flex; }
+  .btn-whatsapp svg { width:18px; height:18px; fill:currentColor; flex-shrink:0; }
+  .share-status { font-size:11px; color:var(--grey-mid); letter-spacing:0.06em;
+    display:none; text-align:center; }
+  .share-status.visible { display:block; }
 
   .uploads-section { width:100%; max-width:800px; padding:0 24px;
     display:flex; flex-direction:column; align-items:center; gap:28px; }
@@ -262,6 +295,16 @@
 
 <!-- UPLOAD -->
 <div class="uploads-section" id="uploadSection">
+  <div class="patient-fields">
+    <div class="field-wrap">
+      <label for="inputPaciente">Nombre del paciente</label>
+      <input type="text" id="inputPaciente" placeholder="Ej: María González" autocomplete="off">
+    </div>
+    <div class="field-wrap">
+      <label for="inputTratamiento">Tratamiento</label>
+      <input type="text" id="inputTratamiento" placeholder="Ej: Blanqueamiento" autocomplete="off">
+    </div>
+  </div>
   <div class="uploads">
     <div class="upload-box" id="boxBefore">
       <span class="corner-badge badge-before">Antes</span>
@@ -355,6 +398,10 @@
 
 <!-- SLIDER -->
 <div class="slider-wrap" id="sliderWrap">
+  <div class="patient-badge" id="patientBadge" style="display:none">
+    <h3 id="badgeName"></h3>
+    <span id="badgeTreatment"></span>
+  </div>
   <div class="slider-container" id="sliderContainer">
     <img class="img-after" id="imgAfter" src="" alt="Después">
     <div class="img-before-wrap" id="beforeWrap">
@@ -373,6 +420,11 @@
       <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Arrastra el divisor
     </p>
+    <button class="btn-whatsapp" id="whatsappBtn" type="button">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.529 5.845L0 24l6.335-1.51A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-5.006-1.368l-.36-.213-3.728.888.939-3.619-.235-.374A9.789 9.789 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+      Compartir por WhatsApp
+    </button>
+    <p class="share-status" id="shareStatus">Subiendo imagen...</p>
     <button class="btn-ghost" type="button" id="backToEditBtn">← Ajustar</button>
     <button class="btn-ghost" type="button" id="resetBtn">↩ Reiniciar</button>
   </div>
@@ -386,14 +438,62 @@ const S = {
   after: { img:null, x:0, y:0, zoom:1, rot:0, flipH:false, flipV:false, drag:false, lx:0, ly:0 }
 };
 const CW=800, CH=600;
+const IMGBB_KEY='6cacc679ce23d93d6789e1bf3c4c60f2';
+let currentStep=1;
 
+// STEP BAR — clickeable solo en pasos ya visitados
 function setStep(n){
+  currentStep=n;
   [1,2,3].forEach(i=>{
     const el=document.getElementById('step'+i);
     el.classList.remove('active','done');
     if(i<n) el.classList.add('done');
     if(i===n) el.classList.add('active');
   });
+}
+
+function navigateTo(n){
+  if(n===currentStep) return;
+  if(n===1){
+    document.getElementById('editorSection').classList.remove('visible');
+    document.getElementById('sliderWrap').classList.remove('visible');
+    document.getElementById('uploadSection').style.display='';
+    setStep(1);
+  } else if(n===2 && S.before.img && S.after.img){
+    document.getElementById('uploadSection').style.display='none';
+    document.getElementById('sliderWrap').classList.remove('visible');
+    document.getElementById('editorSection').classList.add('visible');
+    setStep(2); initCanvas('before'); initCanvas('after');
+  } else if(n===3 && S.before.img && S.after.img){
+    document.getElementById('imgBefore').src=exportCanvas('before');
+    document.getElementById('imgAfter').src=exportCanvas('after');
+    document.getElementById('imgAfter').onload=fixBeforeWidth;
+    document.getElementById('uploadSection').style.display='none';
+    document.getElementById('editorSection').classList.remove('visible');
+    document.getElementById('sliderWrap').classList.add('visible');
+    document.getElementById('whatsappBtn').classList.add('visible');
+    document.getElementById('shareStatus').classList.remove('visible');
+    updatePatientBadge();
+    setStep(3); setPos(0.5); fixBeforeWidth();
+  }
+}
+
+// Hacer los steps clickeables
+document.getElementById('step1').addEventListener('click',()=>{ if(currentStep>1) navigateTo(1); });
+document.getElementById('step2').addEventListener('click',()=>{ if(currentStep>2) navigateTo(2); else if(currentStep===1 && S.before.img && S.after.img) navigateTo(2); });
+document.getElementById('step3').addEventListener('click',()=>{ if(currentStep===2 && S.before.img && S.after.img) navigateTo(3); else if(currentStep<3 && document.getElementById('step3').classList.contains('done')) navigateTo(3); });
+
+function updatePatientBadge(){
+  const name=document.getElementById('inputPaciente').value.trim();
+  const treatment=document.getElementById('inputTratamiento').value.trim();
+  const badge=document.getElementById('patientBadge');
+  if(name||treatment){
+    document.getElementById('badgeName').textContent=name||'';
+    document.getElementById('badgeTreatment').textContent=treatment||'';
+    badge.style.display='block';
+  } else {
+    badge.style.display='none';
+  }
 }
 
 // UPLOAD — createObjectURL es más confiable que FileReader en Safari iOS con archivos locales
@@ -445,29 +545,10 @@ function checkReady(){
   (S.before.img&&S.after.img)?btn.classList.add('visible'):btn.classList.remove('visible');
 }
 
-document.getElementById('compareBtn').addEventListener('click',()=>{
-  document.getElementById('uploadSection').style.display='none';
-  document.getElementById('editorSection').classList.add('visible');
-  setStep(2); initCanvas('before'); initCanvas('after');
-});
-document.getElementById('backBtn').addEventListener('click',()=>{
-  document.getElementById('editorSection').classList.remove('visible');
-  document.getElementById('uploadSection').style.display='';
-  setStep(1);
-});
-document.getElementById('backToEditBtn').addEventListener('click',()=>{
-  document.getElementById('sliderWrap').classList.remove('visible');
-  document.getElementById('editorSection').classList.add('visible');
-  setStep(2);
-});
-document.getElementById('generateBtn').addEventListener('click',()=>{
-  document.getElementById('imgBefore').src=exportCanvas('before');
-  document.getElementById('imgAfter').src=exportCanvas('after');
-  document.getElementById('imgAfter').onload=fixBeforeWidth;
-  document.getElementById('editorSection').classList.remove('visible');
-  document.getElementById('sliderWrap').classList.add('visible');
-  setStep(3); setPos(0.5); fixBeforeWidth();
-});
+document.getElementById('compareBtn').addEventListener('click',()=>{ navigateTo(2); });
+document.getElementById('backBtn').addEventListener('click',()=>{ navigateTo(1); });
+document.getElementById('backToEditBtn').addEventListener('click',()=>{ navigateTo(2); });
+document.getElementById('generateBtn').addEventListener('click',()=>{ navigateTo(3); });
 document.getElementById('resetBtn').addEventListener('click',()=>{
   ['before','after'].forEach(k=>{
     S[k]={img:null,x:0,y:0,zoom:1,rot:0,flipH:false,flipV:false,drag:false,lx:0,ly:0};
@@ -477,11 +558,96 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
     document.getElementById('file'+sf).value='';
     resetEditor(k);
   });
+  document.getElementById('inputPaciente').value='';
+  document.getElementById('inputTratamiento').value='';
+  document.getElementById('patientBadge').style.display='none';
+  document.getElementById('whatsappBtn').classList.remove('visible');
+  document.getElementById('shareStatus').classList.remove('visible');
   document.getElementById('uploadSection').style.display='';
   document.getElementById('compareBtn').classList.remove('visible');
   document.getElementById('sliderWrap').classList.remove('visible');
   document.getElementById('editorSection').classList.remove('visible');
   setStep(1);
+});
+
+// WHATSAPP — sube a ImgBB y abre WhatsApp con link
+document.getElementById('whatsappBtn').addEventListener('click', async function(){
+  const btn=this;
+  const status=document.getElementById('shareStatus');
+  btn.classList.remove('visible');
+  status.textContent='Subiendo imagen...';
+  status.classList.add('visible');
+
+  // Renderizar comparación completa (ambas imágenes side by side en un canvas)
+  const SHARE_W=1200, SHARE_H=600;
+  const shareCanvas=document.createElement('canvas');
+  shareCanvas.width=SHARE_W; shareCanvas.height=SHARE_H;
+  const ctx=shareCanvas.getContext('2d');
+
+  // Fondo blanco
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,SHARE_W,SHARE_H);
+
+  // Dibujar imagen Antes (mitad izquierda) y Después (mitad derecha)
+  const beforeImg=document.getElementById('imgBefore');
+  const afterImg=document.getElementById('imgAfter');
+  ctx.drawImage(afterImg,0,0,SHARE_W,SHARE_H);
+  ctx.drawImage(beforeImg,0,0,SHARE_W/2,SHARE_H);
+
+  // Línea divisoria
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(SHARE_W/2,0); ctx.lineTo(SHARE_W/2,SHARE_H); ctx.stroke();
+
+  // Badges Antes / Después
+  ctx.fillStyle='rgba(255,255,255,0.88)';
+  ctx.beginPath(); ctx.roundRect(20,20,90,28,14); ctx.fill();
+  ctx.fillStyle='#418cdf'; ctx.font='bold 12px sans-serif';
+  ctx.textAlign='center'; ctx.fillText('ANTES',65,39);
+
+  ctx.fillStyle='rgba(2,120,251,0.88)';
+  ctx.beginPath(); ctx.roundRect(SHARE_W-110,20,90,28,14); ctx.fill();
+  ctx.fillStyle='#ffffff'; ctx.font='bold 12px sans-serif';
+  ctx.fillText('DESPUÉS',SHARE_W-65,39);
+
+  // Nombre y tratamiento en la parte inferior
+  const name=document.getElementById('inputPaciente').value.trim();
+  const treatment=document.getElementById('inputTratamiento').value.trim();
+  if(name||treatment){
+    ctx.fillStyle='rgba(0,0,0,0.45)';
+    ctx.fillRect(0,SHARE_H-50,SHARE_W,50);
+    ctx.fillStyle='#ffffff'; ctx.textAlign='center';
+    if(name){ ctx.font='bold 16px sans-serif'; ctx.fillText(name,SHARE_W/2,SHARE_H-28); }
+    if(treatment){ ctx.font='13px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fillText(treatment,SHARE_W/2,SHARE_H-10); }
+  }
+
+  // Subir a ImgBB
+  try {
+    const dataURL=shareCanvas.toDataURL('image/jpeg',0.90);
+    const base64=dataURL.split(',')[1];
+    const formData=new FormData();
+    formData.append('image',base64);
+    const name2=document.getElementById('inputPaciente').value.trim()||'comparacion';
+    const treatment2=document.getElementById('inputTratamiento').value.trim();
+    formData.append('name', name2+(treatment2?' - '+treatment2:''));
+
+    const resp=await fetch('https://api.imgbb.com/1/upload?key='+IMGBB_KEY, {method:'POST',body:formData});
+    const data=await resp.json();
+    if(!data.success) throw new Error('ImgBB error');
+
+    const imgURL=data.data.url;
+    const paciente=document.getElementById('inputPaciente').value.trim();
+    const trat=document.getElementById('inputTratamiento').value.trim();
+    let msg='Resultados de Clínica Alvarez';
+    if(paciente) msg+='\nPaciente: '+paciente;
+    if(trat) msg+='\nTratamiento: '+trat;
+    msg+='\n\n'+imgURL;
+
+    status.classList.remove('visible');
+    btn.classList.add('visible');
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  } catch(e){
+    status.textContent='Error al subir. Intenta de nuevo.';
+    btn.classList.add('visible');
+  }
 });
 
 function initCanvas(key){
