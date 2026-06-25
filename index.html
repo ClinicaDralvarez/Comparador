@@ -79,6 +79,16 @@
   .btn-whatsapp:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(37,211,102,.4); }
   .btn-whatsapp.visible { display:inline-flex; }
   .btn-whatsapp svg { width:18px; height:18px; fill:currentColor; flex-shrink:0; }
+
+  .btn-copy { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--blue-deep);
+    background:var(--white); border:1.5px solid var(--blue-light);
+    padding:14px 28px; border-radius:100px; cursor:pointer;
+    transition:all .2s; display:none; align-items:center; gap:8px; }
+  .btn-copy:hover { background:var(--blue-pale); border-color:var(--blue-mid); }
+  .btn-copy.visible { display:inline-flex; }
+  .btn-copy.copied { color:#16a34a; border-color:#86efac; background:#f0fdf4; }
+  .btn-copy svg { flex-shrink:0; }
   .share-status { font-size:11px; color:var(--grey-mid); letter-spacing:0.06em;
     display:none; text-align:center; }
   .share-status.visible { display:block; }
@@ -424,6 +434,10 @@
       <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.529 5.845L0 24l6.335-1.51A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-5.006-1.368l-.36-.213-3.728.888.939-3.619-.235-.374A9.789 9.789 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
       Compartir por WhatsApp
     </button>
+    <button class="btn-copy" id="copyBtn" type="button">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copiar link
+    </button>
     <p class="share-status" id="shareStatus">Subiendo imagen...</p>
     <button class="btn-ghost" type="button" id="backToEditBtn">← Ajustar</button>
     <button class="btn-ghost" type="button" id="resetBtn">↩ Reiniciar</button>
@@ -463,6 +477,7 @@ function navigateTo(n){
     document.getElementById('uploadSection').style.display='none';
     document.getElementById('sliderWrap').classList.remove('visible');
     document.getElementById('editorSection').classList.add('visible');
+    sharedImgURL=null; // resetear link al volver a editar
     setStep(2); initCanvas('before'); initCanvas('after');
   } else if(n===3 && S.before.img && S.after.img){
     document.getElementById('imgBefore').src=exportCanvas('before');
@@ -472,6 +487,7 @@ function navigateTo(n){
     document.getElementById('editorSection').classList.remove('visible');
     document.getElementById('sliderWrap').classList.add('visible');
     document.getElementById('whatsappBtn').classList.add('visible');
+    document.getElementById('copyBtn').classList.add('visible');
     document.getElementById('shareStatus').classList.remove('visible');
     updatePatientBadge();
     setStep(3); setPos(0.5); fixBeforeWidth();
@@ -558,10 +574,12 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
     document.getElementById('file'+sf).value='';
     resetEditor(k);
   });
+  sharedImgURL=null;
   document.getElementById('inputPaciente').value='';
   document.getElementById('inputTratamiento').value='';
   document.getElementById('patientBadge').style.display='none';
   document.getElementById('whatsappBtn').classList.remove('visible');
+  document.getElementById('copyBtn').classList.remove('visible');
   document.getElementById('shareStatus').classList.remove('visible');
   document.getElementById('uploadSection').style.display='';
   document.getElementById('compareBtn').classList.remove('visible');
@@ -570,34 +588,24 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
   setStep(1);
 });
 
-// WHATSAPP — sube a ImgBB y abre WhatsApp con link
-document.getElementById('whatsappBtn').addEventListener('click', async function(){
-  const btn=this;
-  const status=document.getElementById('shareStatus');
-  btn.classList.remove('visible');
-  status.textContent='Subiendo imagen...';
-  status.classList.add('visible');
+// COMPARTIR — subida única a ImgBB, link reutilizado por WhatsApp y copiar
+let sharedImgURL = null;
 
-  // Renderizar comparación completa (ambas imágenes side by side en un canvas)
+async function subirImagen(){
   const SHARE_W=1200, SHARE_H=600;
   const shareCanvas=document.createElement('canvas');
   shareCanvas.width=SHARE_W; shareCanvas.height=SHARE_H;
   const ctx=shareCanvas.getContext('2d');
 
-  // Fondo blanco
   ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,SHARE_W,SHARE_H);
-
-  // Dibujar imagen Antes (mitad izquierda) y Después (mitad derecha)
   const beforeImg=document.getElementById('imgBefore');
   const afterImg=document.getElementById('imgAfter');
   ctx.drawImage(afterImg,0,0,SHARE_W,SHARE_H);
   ctx.drawImage(beforeImg,0,0,SHARE_W/2,SHARE_H);
 
-  // Línea divisoria
   ctx.strokeStyle='#ffffff'; ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(SHARE_W/2,0); ctx.lineTo(SHARE_W/2,SHARE_H); ctx.stroke();
 
-  // Badges Antes / Después
   ctx.fillStyle='rgba(255,255,255,0.88)';
   ctx.beginPath(); ctx.roundRect(20,20,90,28,14); ctx.fill();
   ctx.fillStyle='#418cdf'; ctx.font='bold 12px sans-serif';
@@ -608,7 +616,6 @@ document.getElementById('whatsappBtn').addEventListener('click', async function(
   ctx.fillStyle='#ffffff'; ctx.font='bold 12px sans-serif';
   ctx.fillText('DESPUÉS',SHARE_W-65,39);
 
-  // Nombre y tratamiento en la parte inferior
   const name=document.getElementById('inputPaciente').value.trim();
   const treatment=document.getElementById('inputTratamiento').value.trim();
   if(name||treatment){
@@ -619,34 +626,97 @@ document.getElementById('whatsappBtn').addEventListener('click', async function(
     if(treatment){ ctx.font='13px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fillText(treatment,SHARE_W/2,SHARE_H-10); }
   }
 
-  // Subir a ImgBB
+  const dataURL=shareCanvas.toDataURL('image/jpeg',0.90);
+  const base64=dataURL.split(',')[1];
+  const formData=new FormData();
+  formData.append('image',base64);
+  const nombreArchivo=(name||'comparacion')+(treatment?' - '+treatment:'');
+  formData.append('name',nombreArchivo);
+
+  const resp=await fetch('https://api.imgbb.com/1/upload?key='+IMGBB_KEY,{method:'POST',body:formData});
+  const data=await resp.json();
+  if(!data.success) throw new Error('ImgBB error');
+  return data.data.url;
+}
+
+function buildMsg(imgURL){
+  const name=document.getElementById('inputPaciente').value.trim();
+  const treatment=document.getElementById('inputTratamiento').value.trim();
+  let msg='Resultados de Clínica Alvarez';
+  if(name) msg+='\nPaciente: '+name;
+  if(treatment) msg+='\nTratamiento: '+treatment;
+  msg+='\n\n'+imgURL;
+  return msg;
+}
+
+function mostrarBotonesCompartir(){
+  document.getElementById('whatsappBtn').classList.add('visible');
+  document.getElementById('copyBtn').classList.add('visible');
+  document.getElementById('shareStatus').classList.remove('visible');
+}
+
+function ocultarBotonesCompartir(){
+  document.getElementById('whatsappBtn').classList.remove('visible');
+  document.getElementById('copyBtn').classList.remove('visible');
+}
+
+// BOTÓN WHATSAPP
+document.getElementById('whatsappBtn').addEventListener('click', async function(){
+  const status=document.getElementById('shareStatus');
+
+  // Si ya tenemos el link, abrir directo
+  if(sharedImgURL){
+    const waWin=window.open('','_blank');
+    waWin.location.href='https://wa.me/?text='+encodeURIComponent(buildMsg(sharedImgURL));
+    return;
+  }
+
+  ocultarBotonesCompartir();
+  status.textContent='Subiendo imagen...';
+  status.classList.add('visible');
+
+  const waWin=window.open('','_blank'); // iOS fix: abrir antes del await
+
   try {
-    const dataURL=shareCanvas.toDataURL('image/jpeg',0.90);
-    const base64=dataURL.split(',')[1];
-    const formData=new FormData();
-    formData.append('image',base64);
-    const name2=document.getElementById('inputPaciente').value.trim()||'comparacion';
-    const treatment2=document.getElementById('inputTratamiento').value.trim();
-    formData.append('name', name2+(treatment2?' - '+treatment2:''));
+    sharedImgURL=await subirImagen();
+    mostrarBotonesCompartir();
+    waWin.location.href='https://wa.me/?text='+encodeURIComponent(buildMsg(sharedImgURL));
+  } catch(e){
+    if(waWin) waWin.close();
+    status.textContent='Error al subir. Intenta de nuevo.';
+    mostrarBotonesCompartir();
+  }
+});
 
-    const resp=await fetch('https://api.imgbb.com/1/upload?key='+IMGBB_KEY, {method:'POST',body:formData});
-    const data=await resp.json();
-    if(!data.success) throw new Error('ImgBB error');
+// BOTÓN COPIAR LINK
+document.getElementById('copyBtn').addEventListener('click', async function(){
+  const btn=this;
+  const status=document.getElementById('shareStatus');
 
-    const imgURL=data.data.url;
-    const paciente=document.getElementById('inputPaciente').value.trim();
-    const trat=document.getElementById('inputTratamiento').value.trim();
-    let msg='Resultados de Clínica Alvarez';
-    if(paciente) msg+='\nPaciente: '+paciente;
-    if(trat) msg+='\nTratamiento: '+trat;
-    msg+='\n\n'+imgURL;
+  // Si ya tenemos el link, copiar directo
+  if(sharedImgURL){
+    navigator.clipboard.writeText(sharedImgURL).then(()=>{
+      btn.textContent='✓ Copiado';
+      btn.classList.add('copied');
+      setTimeout(()=>{ btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; btn.classList.remove('copied'); },2500);
+    });
+    return;
+  }
 
-    status.classList.remove('visible');
-    btn.classList.add('visible');
-    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  ocultarBotonesCompartir();
+  status.textContent='Subiendo imagen...';
+  status.classList.add('visible');
+
+  try {
+    sharedImgURL=await subirImagen();
+    mostrarBotonesCompartir();
+    await navigator.clipboard.writeText(sharedImgURL);
+    btn.textContent='✓ Copiado';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; btn.classList.remove('copied'); },2500);
   } catch(e){
     status.textContent='Error al subir. Intenta de nuevo.';
-    btn.classList.add('visible');
+    mostrarBotonesCompartir();
   }
 });
 
