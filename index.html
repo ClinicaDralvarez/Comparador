@@ -52,7 +52,6 @@
   .step-item.done   .step-num { background:var(--blue-pale); border-color:var(--blue-light); }
   .step-sep { width:32px; height:1px; background:var(--line); margin:0 8px; }
 
-  /* CAMPOS PACIENTE */
   .patient-fields { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .field-wrap { display:flex; flex-direction:column; gap:6px; }
   .field-wrap label { font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
@@ -63,13 +62,11 @@
   .field-wrap input:focus { border-color:var(--blue-mid); box-shadow:0 0 0 3px rgba(65,140,223,.12); }
   .field-wrap input::placeholder { color:#b0c4de; }
 
-  /* BADGE PACIENTE EN SLIDER */
   .patient-badge { text-align:center; }
   .patient-badge h3 { font-family:'Cormorant Garamond',serif; font-weight:400;
     font-size:clamp(1.1rem,2.5vw,1.5rem); color:var(--grey-dark); }
   .patient-badge span { font-size:11px; color:var(--grey-mid); letter-spacing:0.1em; text-transform:uppercase; }
 
-  /* BOTÓN WHATSAPP */
   .btn-whatsapp { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
     letter-spacing:0.12em; text-transform:uppercase;
     background:linear-gradient(135deg,#25d366,#128c7e);
@@ -104,7 +101,6 @@
   .upload-box:hover { border-color:var(--blue-mid); box-shadow:0 4px 24px rgba(2,120,251,.12); transform:translateY(-2px); }
   .upload-box.has-image { border-style:solid; border-color:var(--blue-deep); box-shadow:0 4px 24px rgba(2,120,251,.14); }
 
-  /* iOS FIX: el input DEBE tener opacity:0 y estar presente en el DOM — NO usar display:none */
   .upload-box input[type="file"] {
     position:absolute; inset:0; width:100%; height:100%;
     opacity:0; cursor:pointer; z-index:4; -webkit-appearance:none;
@@ -133,7 +129,6 @@
   .badge-before { background:rgba(2,120,251,.12); color:var(--blue-deep); border:1px solid rgba(2,120,251,.25); backdrop-filter:blur(6px); }
   .badge-after  { background:rgba(2,120,251,.85); color:var(--white); backdrop-filter:blur(6px); }
 
-  /* label nativo como botón Cambiar — más confiable en iOS que .click() */
   label.replace-btn {
     position:absolute; bottom:12px; right:12px; z-index:5;
     background:rgba(255,255,255,.92); color:var(--blue-deep); font-family:'DM Sans',sans-serif;
@@ -172,7 +167,7 @@
 
   .canvas-wrap { position:relative; background:#1a1a2e; cursor:grab;
     aspect-ratio:4/3; overflow:hidden; user-select:none; -webkit-user-select:none;
-    touch-action:none; } /* touch-action:none necesario para touchmove preventable */
+    touch-action:none; }
   .canvas-wrap:active { cursor:grabbing; }
   .canvas-wrap canvas { display:block; width:100%; height:100%; }
   .canvas-hint { position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
@@ -438,7 +433,7 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
       Copiar link
     </button>
-    <p class="share-status" id="shareStatus">Subiendo imagen...</p>
+    <p class="share-status" id="shareStatus">Subiendo imágenes...</p>
     <button class="btn-ghost" type="button" id="backToEditBtn">← Ajustar</button>
     <button class="btn-ghost" type="button" id="resetBtn">↩ Reiniciar</button>
   </div>
@@ -453,9 +448,9 @@ const S = {
 };
 const CW=800, CH=600;
 const IMGBB_KEY='6cacc679ce23d93d6789e1bf3c4c60f2';
+const VIEWER_BASE='https://clinicadralvarez.github.io/Comparador/viewer.html';
 let currentStep=1;
 
-// STEP BAR — clickeable solo en pasos ya visitados
 function setStep(n){
   currentStep=n;
   [1,2,3].forEach(i=>{
@@ -477,7 +472,7 @@ function navigateTo(n){
     document.getElementById('uploadSection').style.display='none';
     document.getElementById('sliderWrap').classList.remove('visible');
     document.getElementById('editorSection').classList.add('visible');
-    sharedImgURL=null; // resetear link al volver a editar
+    sharedViewerURL=null;
     setStep(2); initCanvas('before'); initCanvas('after');
   } else if(n===3 && S.before.img && S.after.img){
     document.getElementById('imgBefore').src=exportCanvas('before');
@@ -494,7 +489,6 @@ function navigateTo(n){
   }
 }
 
-// Hacer los steps clickeables
 document.getElementById('step1').addEventListener('click',()=>{ if(currentStep>1) navigateTo(1); });
 document.getElementById('step2').addEventListener('click',()=>{ if(currentStep>2) navigateTo(2); else if(currentStep===1 && S.before.img && S.after.img) navigateTo(2); });
 document.getElementById('step3').addEventListener('click',()=>{ if(currentStep===2 && S.before.img && S.after.img) navigateTo(3); else if(currentStep<3 && document.getElementById('step3').classList.contains('done')) navigateTo(3); });
@@ -512,33 +506,22 @@ function updatePatientBadge(){
   }
 }
 
-// UPLOAD — createObjectURL es más confiable que FileReader en Safari iOS con archivos locales
 function setupUpload(inputId, boxId, previewId, key){
   const input=document.getElementById(inputId);
   const box=document.getElementById(boxId);
   const prev=document.getElementById(previewId);
-
   input.addEventListener('change', function(){
     const file=this.files&&this.files[0];
     if(!file) return;
-
-    // Revocar URL anterior si existe
     if(S[key]._objURL){ URL.revokeObjectURL(S[key]._objURL); S[key]._objURL=null; }
-
     const tryObjectURL=function(){
       const objURL=URL.createObjectURL(file);
       S[key]._objURL=objURL;
       const img=new Image();
-      img.onload=function(){
-        S[key].img=img;
-        prev.src=objURL;
-        box.classList.add('has-image');
-        checkReady();
-      };
-      img.onerror=tryFileReader; // fallback si falla
+      img.onload=function(){ S[key].img=img; prev.src=objURL; box.classList.add('has-image'); checkReady(); };
+      img.onerror=tryFileReader;
       img.src=objURL;
     };
-
     const tryFileReader=function(){
       const reader=new FileReader();
       reader.onload=function(e){
@@ -549,7 +532,6 @@ function setupUpload(inputId, boxId, previewId, key){
       };
       reader.readAsDataURL(file);
     };
-
     tryObjectURL();
   });
 }
@@ -574,7 +556,7 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
     document.getElementById('file'+sf).value='';
     resetEditor(k);
   });
-  sharedImgURL=null;
+  sharedViewerURL=null;
   document.getElementById('inputPaciente').value='';
   document.getElementById('inputTratamiento').value='';
   document.getElementById('patientBadge').style.display='none';
@@ -588,64 +570,48 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
   setStep(1);
 });
 
-// COMPARTIR — subida única a ImgBB, link reutilizado por WhatsApp y copiar
-let sharedImgURL = null;
+// ── COMPARTIR ──────────────────────────────────────────────────────────────
+let sharedViewerURL = null;
 
-async function subirImagen(){
-  const SHARE_W=1200, SHARE_H=600;
-  const shareCanvas=document.createElement('canvas');
-  shareCanvas.width=SHARE_W; shareCanvas.height=SHARE_H;
-  const ctx=shareCanvas.getContext('2d');
-
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,SHARE_W,SHARE_H);
-  const beforeImg=document.getElementById('imgBefore');
-  const afterImg=document.getElementById('imgAfter');
-  ctx.drawImage(afterImg,0,0,SHARE_W,SHARE_H);
-  ctx.drawImage(beforeImg,0,0,SHARE_W/2,SHARE_H);
-
-  ctx.strokeStyle='#ffffff'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(SHARE_W/2,0); ctx.lineTo(SHARE_W/2,SHARE_H); ctx.stroke();
-
-  ctx.fillStyle='rgba(255,255,255,0.88)';
-  ctx.beginPath(); ctx.roundRect(20,20,90,28,14); ctx.fill();
-  ctx.fillStyle='#418cdf'; ctx.font='bold 12px sans-serif';
-  ctx.textAlign='center'; ctx.fillText('ANTES',65,39);
-
-  ctx.fillStyle='rgba(2,120,251,0.88)';
-  ctx.beginPath(); ctx.roundRect(SHARE_W-110,20,90,28,14); ctx.fill();
-  ctx.fillStyle='#ffffff'; ctx.font='bold 12px sans-serif';
-  ctx.fillText('DESPUÉS',SHARE_W-65,39);
-
-  const name=document.getElementById('inputPaciente').value.trim();
-  const treatment=document.getElementById('inputTratamiento').value.trim();
-  if(name||treatment){
-    ctx.fillStyle='rgba(0,0,0,0.45)';
-    ctx.fillRect(0,SHARE_H-50,SHARE_W,50);
-    ctx.fillStyle='#ffffff'; ctx.textAlign='center';
-    if(name){ ctx.font='bold 16px sans-serif'; ctx.fillText(name,SHARE_W/2,SHARE_H-28); }
-    if(treatment){ ctx.font='13px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.fillText(treatment,SHARE_W/2,SHARE_H-10); }
-  }
-
-  const dataURL=shareCanvas.toDataURL('image/jpeg',0.90);
+// Sube una imagen (dataURL) a ImgBB y retorna la URL pública
+async function subirUnaImagen(dataURL, nombre){
   const base64=dataURL.split(',')[1];
   const formData=new FormData();
   formData.append('image',base64);
-  const nombreArchivo=(name||'comparacion')+(treatment?' - '+treatment:'');
-  formData.append('name',nombreArchivo);
-
+  formData.append('name',nombre);
   const resp=await fetch('https://api.imgbb.com/1/upload?key='+IMGBB_KEY,{method:'POST',body:formData});
   const data=await resp.json();
-  if(!data.success) throw new Error('ImgBB error');
+  if(!data.success) throw new Error('ImgBB error: '+nombre);
   return data.data.url;
 }
 
-function buildMsg(imgURL){
+// Sube ambas imágenes y genera el link al viewer dinámico
+async function subirImagenes(){
+  const name=document.getElementById('inputPaciente').value.trim();
+  const treatment=document.getElementById('inputTratamiento').value.trim();
+  const sufijo=(name||'paciente')+(treatment?' - '+treatment:'');
+
+  const [urlAntes, urlDespues]=await Promise.all([
+    subirUnaImagen(exportCanvas('before'), sufijo+' [antes]'),
+    subirUnaImagen(exportCanvas('after'),  sufijo+' [despues]')
+  ]);
+
+  const params=new URLSearchParams();
+  params.set('antes',   urlAntes);
+  params.set('despues', urlDespues);
+  if(name)      params.set('paciente',    name);
+  if(treatment) params.set('tratamiento', treatment);
+
+  return VIEWER_BASE+'?'+params.toString();
+}
+
+function buildMsg(viewerURL){
   const name=document.getElementById('inputPaciente').value.trim();
   const treatment=document.getElementById('inputTratamiento').value.trim();
   let msg='Resultados de Clínica Alvarez';
-  if(name) msg+='\nPaciente: '+name;
+  if(name)      msg+='\nPaciente: '+name;
   if(treatment) msg+='\nTratamiento: '+treatment;
-  msg+='\n\n'+imgURL;
+  msg+='\n\n'+viewerURL;
   return msg;
 }
 
@@ -654,7 +620,6 @@ function mostrarBotonesCompartir(){
   document.getElementById('copyBtn').classList.add('visible');
   document.getElementById('shareStatus').classList.remove('visible');
 }
-
 function ocultarBotonesCompartir(){
   document.getElementById('whatsappBtn').classList.remove('visible');
   document.getElementById('copyBtn').classList.remove('visible');
@@ -663,24 +628,19 @@ function ocultarBotonesCompartir(){
 // BOTÓN WHATSAPP
 document.getElementById('whatsappBtn').addEventListener('click', async function(){
   const status=document.getElementById('shareStatus');
-
-  // Si ya tenemos el link, abrir directo
-  if(sharedImgURL){
+  if(sharedViewerURL){
     const waWin=window.open('','_blank');
-    waWin.location.href='https://wa.me/?text='+encodeURIComponent(buildMsg(sharedImgURL));
+    waWin.location.href='https://wa.me/?text='+encodeURIComponent(buildMsg(sharedViewerURL));
     return;
   }
-
   ocultarBotonesCompartir();
-  status.textContent='Subiendo imagen...';
+  status.textContent='Subiendo imágenes...';
   status.classList.add('visible');
-
-  const waWin=window.open('','_blank'); // iOS fix: abrir antes del await
-
+  const waWin=window.open('','_blank');
   try {
-    sharedImgURL=await subirImagen();
+    sharedViewerURL=await subirImagenes();
     mostrarBotonesCompartir();
-    waWin.location.href='https://wa.me/?text='+encodeURIComponent(buildMsg(sharedImgURL));
+    waWin.location.href='https://wa.me/?text='+encodeURIComponent(buildMsg(sharedViewerURL));
   } catch(e){
     if(waWin) waWin.close();
     status.textContent='Error al subir. Intenta de nuevo.';
@@ -692,25 +652,21 @@ document.getElementById('whatsappBtn').addEventListener('click', async function(
 document.getElementById('copyBtn').addEventListener('click', async function(){
   const btn=this;
   const status=document.getElementById('shareStatus');
-
-  // Si ya tenemos el link, copiar directo
-  if(sharedImgURL){
-    navigator.clipboard.writeText(sharedImgURL).then(()=>{
+  if(sharedViewerURL){
+    navigator.clipboard.writeText(sharedViewerURL).then(()=>{
       btn.textContent='✓ Copiado';
       btn.classList.add('copied');
       setTimeout(()=>{ btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; btn.classList.remove('copied'); },2500);
     });
     return;
   }
-
   ocultarBotonesCompartir();
-  status.textContent='Subiendo imagen...';
+  status.textContent='Subiendo imágenes...';
   status.classList.add('visible');
-
   try {
-    sharedImgURL=await subirImagen();
+    sharedViewerURL=await subirImagenes();
     mostrarBotonesCompartir();
-    await navigator.clipboard.writeText(sharedImgURL);
+    await navigator.clipboard.writeText(sharedViewerURL);
     btn.textContent='✓ Copiado';
     btn.classList.add('copied');
     setTimeout(()=>{ btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copiar link'; btn.classList.remove('copied'); },2500);
@@ -720,6 +676,7 @@ document.getElementById('copyBtn').addEventListener('click', async function(){
   }
 });
 
+// ── CANVAS EDITOR ──────────────────────────────────────────────────────────
 function initCanvas(key){
   const sf=key==='before'?'Before':'After';
   const c=document.getElementById('canvas'+sf);
@@ -789,7 +746,6 @@ function setupDrag(key){
   const wrap=document.getElementById('wrap'+sf);
   const cvs=document.getElementById('canvas'+sf);
   function sc(dx,dy){ return{sx:dx*(CW/cvs.offsetWidth),sy:dy*(CH/cvs.offsetHeight)}; }
-
   wrap.addEventListener('mousedown',e=>{ S[key].drag=true; S[key].lx=e.clientX; S[key].ly=e.clientY; e.preventDefault(); });
   window.addEventListener('mousemove',e=>{
     if(!S[key].drag) return;
@@ -797,7 +753,6 @@ function setupDrag(key){
     S[key].x+=sx; S[key].y+=sy; S[key].lx=e.clientX; S[key].ly=e.clientY; draw(key);
   });
   window.addEventListener('mouseup',()=>{ S[key].drag=false; });
-
   wrap.addEventListener('touchstart',e=>{
     if(e.touches.length===1){ S[key].drag=true; S[key].lx=e.touches[0].clientX; S[key].ly=e.touches[0].clientY; }
   },{passive:true});
@@ -809,8 +764,6 @@ function setupDrag(key){
     }
   },{passive:false});
   window.addEventListener('touchend',()=>{ S[key].drag=false; },{passive:true});
-
-  // Pinch zoom
   let pinchDist=0;
   wrap.addEventListener('touchstart',e=>{ if(e.touches.length===2) pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); },{passive:true});
   wrap.addEventListener('touchmove',e=>{
@@ -828,7 +781,6 @@ function setupDrag(key){
     }
   },{passive:false});
   wrap.addEventListener('touchend',e=>{ if(e.touches.length<2) pinchDist=0; },{passive:true});
-
   wrap.addEventListener('wheel',e=>{ e.preventDefault();
     const sl=document.getElementById('zoom'+sf);
     const v=Math.min(300,Math.max(20,parseFloat(sl.value)+(e.deltaY>0?-5:5)));
@@ -838,7 +790,7 @@ function setupDrag(key){
 }
 setupDrag('before'); setupDrag('after');
 
-// COMPARISON SLIDER
+// ── COMPARISON SLIDER ──────────────────────────────────────────────────────
 let sDrag=false;
 const cont=document.getElementById('sliderContainer');
 function setPos(p){ p=Math.max(0.01,Math.min(0.99,p));
